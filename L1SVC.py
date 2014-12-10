@@ -13,7 +13,7 @@ from sklearn.svm import LinearSVC
 from nltk.tokenize import TreebankWordTokenizer
 
 
-datasets  = ["QYM"]
+datasets  = ["QYM","LABR"]
 #Reading Datasets 
 for dataset_name in datasets:
     print " Experimenting dataset " + dataset_name
@@ -43,8 +43,8 @@ for dataset_name in datasets:
     fc = []                             #feature counts for each iteration
     fs = []                  #feature ids for each iteration
 
-    # cr = [pow(10,i) for i in range(-5,5,1)]
-    cr = arange(1.4,1.8,0.01)   
+    cr = [pow(10,i) for i in range(-2,6,1)]
+    # cr = arange(1.4,1.8,0.01)   
     for c in cr:
         try :
             svc = LinearSVC(C=c, penalty="l1", dual=False)
@@ -56,7 +56,8 @@ for dataset_name in datasets:
 
             print "dataset : " + dataset_name + "acc = " + str(accuracy) + \
                     " at c = " + str(c)  + " and n_features = " + \
-                    str(feature_count)
+                    str(feature_count) + " and f_% = " + \
+                    str(float(feature_count)/Xtrain.shape[1])
 
             acc.append(accuracy)
             fc.append(feature_count)
@@ -74,9 +75,10 @@ for dataset_name in datasets:
     f_acc = open(prefix + "L1SVC_" + \
     	dataset_name + "_nf_vs_acc.csv","w")
 
-    f_acc.write("features_number,accuracy")    
+    f_acc.write("features_number,accuracy,feature_precentage")    
     for i,c in enumerate(acc):
-        f_acc.write("\n%s,%s"%(fc[i],c))
+        perc = float(fc[i])/Xtrain.shape[1]
+        f_acc.write("\n%s,%s,%s"%(fc[i],c,perc))
 
     # get features for max accuracy #if max accuracy get the minimum feature counts
     # acc is sorted according to increasing of number of features (increasing of c)
