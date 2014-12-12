@@ -18,7 +18,7 @@ classifiers = { 'LSVC' : LinearSVC,
                 'LREG' : LogisticRegression
                 }
 
-#Reading Datasets 
+# Reading Datasets
 for dataset_name in datasets:
     for classifier_name,classifier_class in classifiers.items():
         print " Experimenting dataset " + dataset_name
@@ -40,20 +40,22 @@ for dataset_name in datasets:
         # y (polarity class of the vector)
         vectorizer = TfidfVectorizer(
                         tokenizer=TreebankWordTokenizer().tokenize,
-                        ngram_range=(1,3))
+                        ngram_range=(1,2))
 
         Xtrain = vectorizer.fit_transform(train.text)    
         ytrain = train.polarity
         Xtest = vectorizer.transform(test.text)
         ytest= test.polarity
 
-        fn = vectorizer.get_feature_names() #feature names
-        acc = []                            #accuracy
-        fc = []                             #feature counts for each iteration
-        fs = []                  #feature ids for each iteration
+        fn = vectorizer.get_feature_names() # feature names
+        acc = []                            # accuracy
+        fc = []                  # feature counts for each iteration
+        fs = []                  # feature ids for each iteration
 
-        cr = [pow(10,i) for i in range(-2,6,1)]
-        # cr = arange(1.4,1.8,0.01)
+        
+        tmp = [pow(10,i) for i in range(-2,6,1)]
+        cr = [i+(x*i) for i in tmp for x in range(1,11)]
+             
         for c in cr:
             try :
                 svc = classifier_class(C=c, penalty="l1", dual=False)
@@ -63,28 +65,26 @@ for dataset_name in datasets:
                 accuracy = np.mean(predicted == ytest)               
                 feature_count = Xtrain_new.shape[1]
 
-                print "dataset : %s acc = %s at c = %s \
-                and feat no. = %s and f_percent = %s"
-                %(dataset_name,accuracy,
-                    c,feature_count,
+                print "classifier : %s dataset : %s acc = %s at c = %s \
+                and feat no. = %s and f_percent = %s" \
+                %(classifier_name, dataset_name,accuracy,
+                    c, feature_count,
                     str(float(feature_count)/Xtrain.shape[1])
                     )
 
                 acc.append(accuracy)
                 fc.append(feature_count)
 
-                tmp = dict([(i,v) for i,v in enumerate(svc.coef_[0]) if v != 0 ])
-                fs.append(tmp)
+                tmp = [(i,v) for i,v in enumerate(svc.coef_[0]) if v != 0 ]
+                fs.append(dict(tmp))
 
             except ValueError, e:
                 print e 
-                print "at dataset : %s at c = %s "\
-                        %(dataset_name,c)
+                print "at classifier : %s dataset : %s at c = %s "\
+                        %(classifier_name, dataset_name, c)
                 pass
         
-
         # logging results to files
-
         prefix = "./experiments-results/"
         f_bestfeatures = open(prefix + \
             classifier_name + "_" + dataset_name + "_bestfeatures.csv","w")
@@ -97,14 +97,17 @@ for dataset_name in datasets:
             f_acc.write("\n%s,%s,%s"%(fc[i],c,perc))
 
         # get features for max accuracy 
-        #if max accuracy get the minimum feature counts
+        # if max accuracy get the minimum feature counts
         # acc is sorted according to increasing of number of features
         
         id_maxacc = acc.index(max(acc))
         best_features = fs[id_maxacc]
-        best_features = sorted(best_features.items(), key=operator.itemgetter(1))
+        best_features = sorted( best_features.items(), 
+                                key=operator.itemgetter(1))
         
-        s = "\n".join([fn[i].encode("utf-8") + "," + str(w) for i,w in best_features])
+        s = "\n".join([fn[i].encode("utf-8") + \
+            "," + str(w) for i,w in best_features])
+
         f_bestfeatures.write("ngram,weight\n"+s)
 
         f_bestfeatures.close()
