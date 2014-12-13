@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import operator 
+import csv 
 
 import numpy as np
 from scipy import arange
@@ -13,8 +14,9 @@ from sklearn.linear_model import LogisticRegression
 
 from nltk.tokenize import TreebankWordTokenizer
 
-datasets  = ["QYM","LABR"]
-classifiers = { 'LSVC' : LinearSVC,
+datasets  = ["QYM","LABR","MOV"]
+
+classifiers = { 'LSVC' : LinearSVC ,
                 'LREG' : LogisticRegression
                 }
 
@@ -32,9 +34,10 @@ for dataset_name in datasets:
                                 docs.index,
                                 train_size=0.8,
                                 test_size = 0.2,random_state=2)
-
+        
         train = docs.loc[trainids]
         test = docs.loc[testids]
+
 
         # Building TFIDF Vectors X (vector of TFIDF weights)
         # y (polarity class of the vector)
@@ -55,7 +58,7 @@ for dataset_name in datasets:
         
         tmp = [pow(10,i) for i in range(-2,6,1)]
         cr = [i+(x*i) for i in tmp for x in range(1,11)]
-             
+
         for c in cr:
             try :
                 svc = classifier_class(C=c, penalty="l1", dual=False)
@@ -104,14 +107,17 @@ for dataset_name in datasets:
         best_features = fs[id_maxacc]
         best_features = sorted( best_features.items(), 
                                 key=operator.itemgetter(1))
-        
-        s = "\n".join([fn[i].encode("utf-8") + \
-            "," + str(w) for i,w in best_features])
 
-        f_bestfeatures.write("ngram,weight\n"+s)
+        
+        fieldnames = ['ngram','weight','polarity']
+        csvwriter = csv.writer(f_bestfeatures, delimiter=',', 
+        	quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        csvwriter.writerow(fieldnames)
+        for i,w in best_features:
+            ngram = fn[i].encode("utf-8")
+            cls = 1 if w > 0 else -1
+            csvwriter.writerow([ngram,w,cls])
 
         f_bestfeatures.close()
         f_acc.close()
 
-
-        
