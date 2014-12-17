@@ -46,7 +46,7 @@ class TRHotelSpider(scrapy.Spider):
                     r['userid'] = user.extract()[0].split("-")[0]
 
                 r['review_id'] = entry.xpath('./@id').extract()[0] 
-                r['title'] = title.xpath('./span/text()')[0]
+                r['title'] = title.xpath('./span/text()').extracT()[0]
                 r['review_url'] = title.xpath('./@href').extract()[0]                
                 scoretxt = entry.css('.rating').xpath('./span/img/@alt').extract()[0]
                 r['score'] = int(scoretxt.split(" ")[0].strip())
