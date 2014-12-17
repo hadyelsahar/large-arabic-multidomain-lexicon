@@ -6,6 +6,7 @@ class Review(scrapy.Item):
     hotel_name = scrapy.Field()
     hotel_url = scrapy.Field()
     review_url = scrapy.Field()
-    text = scrapy.Field()    
+    text = scrapy.Field()
+    userid = scrapy.Field()    
     score = scrapy.Field()
     review_id = scrapy.Field()
