@@ -12,8 +12,8 @@ from tripadvisorspider.items  import *
 
 class TRHotelSpider(scrapy.Spider):    
     name = "tripadvisorhotelspider"
-    start_urls = ['http://www.tripadvisor.com.eg/AllLocations-g1-c1-Hotels-World.html']                  
-    # start_urls = ['http://www.tripadvisor.com.eg/AllLocations-g294200-c1-Hotels-Egypt.html'] #test egypt hotels 
+    # start_urls = ['http://www.tripadvisor.com.eg/AllLocations-g1-c1-Hotels-World.html']                  
+    start_urls = ['http://www.tripadvisor.com.eg/AllLocations-g294200-c1-Hotels-Egypt.html'] #test egypt hotels 
 
     baseurl = 'http://www.tripadvisor.com.eg'
     allowed_domains = ["tripadvisor.com.eg"]
@@ -40,6 +40,11 @@ class TRHotelSpider(scrapy.Spider):
                 r = Review()
                 r['hotel_name']= hotel_name
                 r['hotel_url'] = response.url
+
+                user = entry.css(".member_info").xpath("./div/@id")
+                if len(user) > 0 :
+                    r['userid'] = user.extract()[0].split("-")[0]
+
                 r['review_id'] = entry.xpath('./@id').extract()[0] 
                 r['title'] = title.xpath('./span/text()')[0]
                 r['review_url'] = title.xpath('./@href').extract()[0]                
