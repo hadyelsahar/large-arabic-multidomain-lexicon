@@ -68,7 +68,7 @@ class TR_ResSpider(scrapy.Spider):
         if len(rev_ar) == 10 :
             nextlink = response.css('.sprite-pageNext').xpath('./@href').extract()
             if len(nextlink) > 0 :
-                yield scrapy.Request(self.baseurl+nextlink[0], callback=self.parse_hotel)
+                yield scrapy.Request(self.baseurl+nextlink[0], callback=self.parse_restaurant)
 
     def parse_more_review(self,response):
         r = response.meta["item"]
