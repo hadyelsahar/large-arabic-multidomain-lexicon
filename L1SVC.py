@@ -14,11 +14,15 @@ from sklearn.linear_model import LogisticRegression
 
 from nltk.tokenize import TreebankWordTokenizer
 
-datasets  = ["QYM","LABR","MOV"]
 
-classifiers = { 'LSVC' : LinearSVC ,
+datasets  = ["QYM","LABR","MOV","TRR","TRH"]
+
+classifiers = { 'LSVC' : LinearSVC,
                 'LREG' : LogisticRegression
                 }
+
+#modes = {1:"run",2:"test"}  #modes for picking c 
+mode = 1
 
 # Reading Datasets
 for dataset_name in datasets:
@@ -55,12 +59,17 @@ for dataset_name in datasets:
         fc = []                  # feature counts for each iteration
         fs = []                  # feature ids for each iteration
 
-        
-        tmp = [pow(10,i) for i in range(-2,6,1)]
-        cr = [i+(x*i) for i in tmp for x in range(1,11)]
+
+        if mode is 1 :         
+            tmp = [pow(10,i) for i in range(-2,6,1)]
+            cr = [i+(x*i) for i in tmp for x in range(1,11)]
+        elif mode is 2 :
+            cr = [pow(10,i) for i in range(-2,4,1)]
+    
 
         for c in cr:
             try :
+
                 svc = classifier_class(C=c, penalty="l1", dual=False)
                 Xtrain_new = svc.fit_transform(Xtrain,ytrain)
                 predicted = svc.predict(Xtest)
