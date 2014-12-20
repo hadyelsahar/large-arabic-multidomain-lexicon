@@ -10,7 +10,7 @@ from scrapy.shell import inspect_response
 from tripadvisorspider.items  import * 
 
 
-class TR_ResSpider(scrapy.Spider):    
+class TR_AttSpider(scrapy.Spider):    
     name = "tripadvisorattractionspider"
     start_urls = ['http://www.tripadvisor.com.eg/AllLocations-g1-c2-Attractions-World.html']                  
     # start_urls = ['http://www.tripadvisor.com.eg/AllLocations-g294200-c2-Attractions-Egypt.html'] #test egypt hotels 
@@ -19,8 +19,8 @@ class TR_ResSpider(scrapy.Spider):
     allowed_domains = ["tripadvisor.com.eg"]
 
     def parse(self,response):        
-                
-        for location in response.xpath("//a[contains(@href,'/-Attractions-')]/@href").extract():
+
+        for location in response.xpath("//a[contains(@href,'-Attractions-')]/@href").extract():
 
             yield scrapy.Request(self.baseurl+location, callback=self.parse)
         
@@ -66,7 +66,7 @@ class TR_ResSpider(scrapy.Spider):
         if len(rev_ar) == 10 :
             nextlink = response.css('.sprite-pageNext').xpath('./@href').extract()
             if len(nextlink) > 0 :
-                yield scrapy.Request(self.baseurl+nextlink[0], callback=self.parse_restaurant)
+                yield scrapy.Request(self.baseurl+nextlink[0], callback=self.parse_attraction)
 
     def parse_more_review(self,response):
         r = response.meta["item"]
