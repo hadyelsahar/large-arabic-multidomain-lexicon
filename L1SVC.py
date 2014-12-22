@@ -13,16 +13,19 @@ from sklearn.svm import LinearSVC
 from sklearn.linear_model import LogisticRegression 
 
 from nltk.tokenize import TreebankWordTokenizer
+from classes.Document import *
 
 
-datasets  = ["QYM","LABR","MOV","TRR","TRH"]
+datasets  = ["QYM","LABR","MOV","SUQ","TRR","TRH"]
+
 
 classifiers = { 'LSVC' : LinearSVC,
                 'LREG' : LogisticRegression
-                }
+              }
 
-#modes = {1:"run",2:"test"}  #modes for picking c 
+#modes = {1:"run",2:"test",3:"fixed cr value"}  #modes for picking c 
 mode = 1
+cr = [7]
 
 # Reading Datasets
 for dataset_name in datasets:
@@ -39,20 +42,20 @@ for dataset_name in datasets:
                                 train_size=0.8,
                                 test_size = 0.2,random_state=2)
         
+        docs["text"] = docs["text"].map(lambda x : Document.preprocess(x).encode("utf-8"))
         train = docs.loc[trainids]
         test = docs.loc[testids]
-
 
         # Building TFIDF Vectors X (vector of TFIDF weights)
         # y (polarity class of the vector)
         vectorizer = TfidfVectorizer(
                         tokenizer=TreebankWordTokenizer().tokenize,
-                        ngram_range=(1,2))
+                        ngram_range=(1,2),norm="l1")
 
-        Xtrain = vectorizer.fit_transform(train.text)    
-        ytrain = train.polarity
-        Xtest = vectorizer.transform(test.text)
-        ytest= test.polarity
+        Xtrain = vectorizer.fit_transform(train["text"])    
+        ytrain = train["polarity"]
+        Xtest = vectorizer.transform(test["text"])
+        ytest= test["polarity"]
 
         fn = vectorizer.get_feature_names() # feature names
         acc = []                            # accuracy
@@ -61,12 +64,14 @@ for dataset_name in datasets:
 
 
         if mode is 1 :         
-            tmp = [pow(10,i) for i in range(-2,6,1)]
+            tmp = [pow(10,i) for i in range(-2,7,1)]
             cr = [i+(x*i) for i in tmp for x in range(1,11)]
         elif mode is 2 :
             cr = [pow(10,i) for i in range(-2,4,1)]
+        elif mode is 3 :
+            # cr 
+            pass
     
-
         for c in cr:
             try :
 
