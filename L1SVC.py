@@ -18,14 +18,13 @@ from classes.Document import *
 
 datasets  = ["QYM","LABR","MOV","SUQ","TRR","TRH"]
 
-
 classifiers = { 'LSVC' : LinearSVC,
                 'LREG' : LogisticRegression
               }
 
 #modes = {1:"run",2:"test",3:"fixed cr value"}  #modes for picking c 
 mode = 1
-cr = [7]
+cr = [20]
 
 # Reading Datasets
 for dataset_name in datasets:
@@ -116,8 +115,8 @@ for dataset_name in datasets:
         # get features for max accuracy 
         # if max accuracy get the minimum feature counts
         # acc is sorted according to increasing of number of features
-        
-        id_maxacc = acc.index(max(acc))
+        acc_r = [round(i,2) for i in acc]
+        id_maxacc = acc_r.index(max(acc_r))
         best_features = fs[id_maxacc]
         best_features = sorted( best_features.items(), 
                                 key=operator.itemgetter(1))
