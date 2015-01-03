@@ -89,7 +89,7 @@ class QayemSpider(scrapy.Spider):
                     review['polarity'] = votes[uid]
                     yield review
 
-    def cleantxt(s):
+    def cleantxt(self,s):
         c = s.encode("utf-8").replace("<br />"," ")        
         c = c.replace('\r','')	
         c = c.replace('\t',' ')
