@@ -13,7 +13,7 @@ from tripadvisorspider.items  import *
 class TR_AttSpider(scrapy.Spider):    
     name = "tripadvisorattractionspider"
     start_urls = ['http://www.tripadvisor.com.eg/AllLocations-g1-c2-Attractions-World.html']                  
-    # start_urls = ['http://www.tripadvisor.com.eg/AllLocations-g294200-c2-Attractions-Egypt.html'] #test egypt hotels 
+    # start_urls = ['http://www.tripadvisor.com.eg/AllLocations-g294200-c2-Attractions-Egypt.html'] #test egypt hotels
 
     baseurl = 'http://www.tripadvisor.com.eg'
     allowed_domains = ["tripadvisor.com.eg"]
@@ -21,12 +21,10 @@ class TR_AttSpider(scrapy.Spider):
     def parse(self,response):        
 
         for location in response.xpath("//a[contains(@href,'-Attractions-')]/@href").extract():
-
             yield scrapy.Request(self.baseurl+location, callback=self.parse)
         
         for i in response.xpath("//div[@id='BODYCON']//a[contains(@href,'/Attraction_Review-')]/@href").extract():
             yield scrapy.Request(self.baseurl+i, callback=self.parse_attraction)
-
 
     def parse_attraction(self,response):
         
@@ -71,8 +69,5 @@ class TR_AttSpider(scrapy.Spider):
     def parse_more_review(self,response):
         r = response.meta["item"]
         r['text']=" ".join(response.xpath(".//p[@id = \"%s\" ]/text()"%r['review_id']).extract())
-
-        yield r 
-
-
-
+        
+        yield r
