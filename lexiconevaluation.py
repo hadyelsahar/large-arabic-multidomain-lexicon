@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+import sys
+import argparse
+
 import numpy as np
 import pandas as pd
 
@@ -20,11 +23,25 @@ from classes.Document import *
 from classes.Utils import * 
 from classes.LexiconVectorizer import * 
 
+parser = argparse.ArgumentParser(description='script for designing experiments sentiment classification upon created datasets and generated lexicons')
+parser.add_argument('-d','--dataset', help='which dataset to run experiment on',required=False)
+args = parser.parse_args()
 
-datasets = ["LABR","SUQ","QYM","TRH","TRA","TRR","MOV"]
-datasets = ["TRH"]
+
+valid_datasets = ["LABR","SUQ","QYM","TRH","TRA","TRR","MOV"]
+if args.dataset is None : 
+    datasets = valid_datasets
+else :
+    if args.dataset in valid_datasets:
+        datasets = [args.dataset]
+    else : 
+        print " only available datasets are " + str(valid_datasets)
+        sys.exit()
+
 
 # c = {"TRH":100,"QYM":30}
+
+print datasets
 
 for dname in datasets : 
 
