@@ -21,84 +21,80 @@ from classes.Utils import *
 from classes.LexiconVectorizer import * 
 
 
-#Building Features 
+datasets = ["LABR","SUQ","QYM","TRH","TRA","TRR","MOV"]
+datasets = ["TRH"]
+
+# c = {"TRH":100,"QYM":30}
+
+for dname in datasets : 
+
+    #Building Features 
 
     #vectorizers : 
     #TFIDF
-tfidf_vectorizer = TfidfVectorizer(
-                        tokenizer=TreebankWordTokenizer().tokenize,
-                        ngram_range=(1,2),norm="l1",
+    tfidf_vectorizer = TfidfVectorizer(
+                            tokenizer=TreebankWordTokenizer().tokenize,
+                            ngram_range=(1,2),norm="l1",
+                            preprocessor = Document.preprocess
+                            )
+
+    #Count
+    count_vectorizer = CountVectorizer()
+
+    #Lexicon Vectorizers
+    lex_vectorizer = LexiconVectorizer(lexfile='lexicon/%s_lex.csv'%dname,
+                        polarity = True,
+                        weightedcount = True,
                         preprocessor = Document.preprocess
                         )
 
-    #Count
-count_vectorizer = CountVectorizer()
+    lex_all_vectorizer = LexiconVectorizer(lexfile='lexicon/ALL_lex.csv',
+                        polarity = True,
+                        weightedcount = True,
+                        preprocessor = Document.preprocess
+                        )
 
-lexname = "TRH"
-lex_vectorizer = LexiconVectorizer(lexfile='lexicon/%s_lex.csv'%lexname,
-                    polarity = True,
-                    weightedcount = True,
-                    preprocessor = Document.preprocess
-                    )
 
     #Feature Building
-features = FeatureUnion([
-    # ("count", count_vectorizer),
-    # ("bool_lex", lex_vectorizer),
-    ("tfidf", tfidf_vectorizer)
-    ])
-
+    features = FeatureUnion([
+        # ("count", count_vectorizer),
+        ("bool_lex", lex_all_vectorizer),
+        ("tfidf", tfidf_vectorizer)
+        ])
 
     #Feature Selecting 
-# selector = VarianceThreshold()
+    # selector = VarianceThreshold()
 
     #Classifiers
-svc = LinearSVC(penalty="l1", dual=False, C= 10)
+    # svc = LinearSVC(penalty="l1", dual=False, C= c[dname])
+    svc = LinearSVC(penalty="l1", dual=False)
 
     #Pipeline 
-classifier = Pipeline([
-    ('features', features), 
-    # ('select',selector), 
-    ('svc', svc)])
+    classifier = Pipeline([
+        ('features', features), 
+        # ('select',selector), 
+        ('svc', svc)])
 
-#dataset prepataion 
-
-datasets = ["LABR","SUQ","QYM","TRH","TRA","TRR","MOV"]
-# datasets = ["LABR","SUQ","QYM","TRH","MOV"]
-datasets = ["SUQ"]
-arr = []
-
-for dname in datasets : 
     
-    for i in create_dataset(dname, CV = True, neutral = True, balanced = False):
-
-        (X_train,y_train,X_test,y_test) = i
+    #dataset prepataion 
+    fold = create_dataset(dname, CV = True, 
+                    neutral = True, balanced = True, n_folds = 5)
+    arr = []
+    for (X_train,y_train,X_test,y_test)  in fold:
 
         classifier.fit_transform(X_train,y_train)
         pred = classifier.predict(X_test)
 
         a1 = np.array(precision_recall_fscore_support(y_test, pred))
         a2 = np.array(precision_recall_fscore_support(y_test, pred, average = "micro"))
-        
         a2[3] = np.sum(a1[3,:]) #adding support count = sum of all supports
-        
-        a = np.c_[a1,a2]
+        arr.append(np.c_[a1,a2])    
 
-        arr.append(a)    
 
     metrics = np.array([sum([i[x] for i in arr])/len(arr) for x in range(4)])
-    
     x = pd.DataFrame(metrics).transpose()
-
-    x.index = ["neg","neutral","pos","Average/Total"] if len(metrics[0]) == 4+ else ["neg","pos","Average/Total"]
+    x.index = ["neg","neutral","pos","Average/Total"] if len(metrics[0]) == 4 \
+                else ["neg","pos","Average/Total"]
     x.columns = ["precision","recall","fscore","support"]
-
     print x 
-
-
-
-
-
-
-
 
