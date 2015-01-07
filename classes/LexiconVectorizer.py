@@ -41,7 +41,6 @@ class LexiconVectorizer(TransformerMixin):
         pred = lambda obj: obj['polarity'].nunique() == 1
         lex = lex.groupby("ngram").filter(pred).drop_duplicates("ngram")
         self.lexicon = lex
-        self.methodregex = methodregex
 
     def transform(self, X, **transform_params):
 
