@@ -41,6 +41,7 @@ class LexiconVectorizer(TransformerMixin):
         pred = lambda obj: obj['polarity'].nunique() == 1
         lex = lex.groupby("ngram").filter(pred).drop_duplicates("ngram")
         self.lexicon = lex
+        self.methodregex = methodregex
 
     def transform(self, X, **transform_params):
 
@@ -51,14 +52,14 @@ class LexiconVectorizer(TransformerMixin):
                 doc = self.preprocessor(doc)
 
             for w in self.lexicon["ngram"]:
-                
                 #regex takes more time
-                #few amount of lexicon terms exists
-                if w in doc : 
-                    p = int(self.lexicon["polarity"][self.lexicon["ngram"] == w])
+                #few amount of lexicon terms exists in each doc
                 
-                    r = regex.compile(r"\b%s\b"%w,encoding="utf-8")
+                p = int(self.lexicon["polarity"][self.lexicon["ngram"] == w])
+                if w in doc:
+                    r = regex.compile(r"(?:^|\s+)%s(?:\s+|$)" % regex.escape(w) ,encoding="utf-8")
                     n = len(r.findall(doc))
+
                 else :
                     n = 0 
 
