@@ -21,7 +21,9 @@ from classes.Document import *
 from classes.Utils import * 
 from classes.LexiconVectorizer import * 
 
-valid_datasets = ["LABR","SUQ","QYM","TRH","TRA","TRR","MOV"]
+valid_datasets = ["SUQ","QYM","TRH","RES","TRR","MOV","LABR"]
+valid_datasets = ["SUQ","QYM","TRH","MOV","LABR","RES"]
+
 
 parser = argparse.ArgumentParser(description='script for designing experiments sentiment classification upon created datasets and generated lexicons')
 parser.add_argument('-d','--dataset',
@@ -94,34 +96,34 @@ for dname in datasets :
 
     #Feature Building
     features = {
-                "lex-domain" : FeatureUnion([
-                        ("lex-domain", vectorizers["lex-domain"])]
-                        ),
+                # "lex-domain" : FeatureUnion([
+                #         ("lex-domain", vectorizers["lex-domain"])]
+                #         ),
                 "lex-all" : FeatureUnion([
                         ("lex-all", vectorizers["lex-all"])]
                         ),
-                "tfidf" : FeatureUnion([
-                        ("tfidf", vectorizers["tfidf"])]
-                        ),
-                "count" : FeatureUnion([
-                        ("count", vectorizers["count"])]
-                        ),
-                "tfidf_lex-domain" : FeatureUnion([
-                        ("lex-domain", vectorizers["lex-domain"]),
-                        ("tfidf", vectorizers["tfidf"])]
-                        ),
-                "tfidf_lex-all" : FeatureUnion([
-                        ("lex-all", vectorizers["lex-all"]),
-                        ("tfidf", vectorizers["tfidf"])]
-                        ),
-                "count_lex-domain" : FeatureUnion([
-                        ("lex-domain", vectorizers["lex-domain"]),
-                        ("count", vectorizers["count"])]
-                        ),
-                "count_lex-all" : FeatureUnion([
-                        ("lex-all", vectorizers["lex-all"]),
-                        ("count", vectorizers["count"])]
-                        )
+                # "tfidf" : FeatureUnion([
+                #         ("tfidf", vectorizers["tfidf"])]
+                #         ),
+                # "count" : FeatureUnion([
+                #         ("count", vectorizers["count"])]
+                #         ),
+                # "tfidf_lex-domain" : FeatureUnion([
+                #         ("lex-domain", vectorizers["lex-domain"]),
+                #         ("tfidf", vectorizers["tfidf"])]
+                #         ),
+                # "tfidf_lex-all" : FeatureUnion([
+                #         ("lex-all", vectorizers["lex-all"]),
+                #         ("tfidf", vectorizers["tfidf"])]
+                #         ),
+                # "count_lex-domain" : FeatureUnion([
+                #         ("lex-domain", vectorizers["lex-domain"]),
+                #         ("count", vectorizers["count"])]
+                #         ),
+                # "count_lex-all" : FeatureUnion([
+                #         ("lex-all", vectorizers["lex-all"]),
+                #         ("count", vectorizers["count"])]
+                #         )
     }
 
     
@@ -159,3 +161,4 @@ for dname in datasets :
                 x.columns = ["precision","recall","fscore","support"]
 
                 print x 
+                print "\n"
