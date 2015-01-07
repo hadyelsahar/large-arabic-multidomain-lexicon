@@ -21,9 +21,8 @@ from classes.Document import *
 from classes.Utils import * 
 from classes.LexiconVectorizer import * 
 
-valid_datasets = ["SUQ","QYM","TRH","RES","TRR","MOV","LABR"]
-valid_datasets = ["SUQ","QYM","TRH","MOV","LABR","RES"]
 
+valid_datasets = ["SUQ","QYM","TRH","TRR","MOV","LABR","RES"]
 
 parser = argparse.ArgumentParser(description='script for designing experiments sentiment classification upon created datasets and generated lexicons')
 parser.add_argument('-d','--dataset',
