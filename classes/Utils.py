@@ -18,20 +18,24 @@ def create_dataset(dname, balanced = False, CV = False, neutral = False, n_folds
     neglen = negdocs.shape[0]
     neulen = neudocs.shape[0]
 
-    #some Datasets doesn't have Neutrals QYM 
-    if len(docs.polarity.unique()) is 2 :
-        if balanced :
-            minlen = min([poslen, neglen])
-            docs = pd.concat([posdocs[0:minlen], negdocs[0:minlen]])
-    else :     
-        if balanced :
-            minlen = min([poslen, neglen, neulen])
-            docs = pd.concat([posdocs[0:minlen], 
-                            negdocs[0:minlen], neudocs[0:minlen]])
+
 
     if not neutral:
         docs = docs[docs["polarity"] != 0]
+        minlen = minlen = min([poslen, neglen])
+    else : 
+        minlen = min([poslen, neglen, neulen])
 
+
+    #some Datasets doesn't have Neutrals QYM 
+    if len(docs.polarity.unique()) is 2 :
+        if balanced :            
+            docs = pd.concat([posdocs[0:minlen], negdocs[0:minlen]])
+    else :     
+        if balanced :            
+            docs = pd.concat([posdocs[0:minlen], 
+                            negdocs[0:minlen], neudocs[0:minlen]])
+                
     if CV :
         docs["polarity"]
         kf = StratifiedKFold(list(docs["polarity"]), 
