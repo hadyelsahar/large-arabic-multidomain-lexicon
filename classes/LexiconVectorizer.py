@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-
-
+from collections import Counter
 import numpy as np
 import pandas as pd
 import regex 
 from sklearn.base import TransformerMixin
-
+from nltk.util import ngrams
+from nltk.tokenize import TreebankWordTokenizer
+from scipy.sparse import * 
 
 class LexiconVectorizer(TransformerMixin):
     """ Custom Tranformer class to transform a vectorize 
@@ -16,14 +17,14 @@ class LexiconVectorizer(TransformerMixin):
     def __init__(self, lexfile, polarity = True, weightedcount = False,
         preprocessor=None):
         """
-        lexfile : is a given file contains lexicon to be used in csv format 
+        lexfile : Is a given file contains lexicon to be used in csv format 
         with column names
             . "ngram" for dictionary words
             . "polarity" for polarity class
 
         polarity : 
             if False : 
-                feature value will be only existence of leixcon words 
+                Feature value will be only existence of leixcon words 
                 0 if exists and 1 if not 
             if True : count feature values will be 0 for non existence 
                 and lexiconword polarity [1,-1] if it exists
@@ -44,39 +45,50 @@ class LexiconVectorizer(TransformerMixin):
 
     def transform(self, X, **transform_params):
 
-        features = []
-        for doc in X : 
-            vector = []
+        #sparse matrix with occurrences nxm
+        # n : number of docs
+        # m : size of lexicon 
+        features = np.empty((len(X),len(self.lexicon)))            
+
+        for docid,doc in enumerate(X):
             if self.preprocessor is not None:
                 doc = self.preprocessor(doc)
 
-            for w in self.lexicon["ngram"]:
-                #regex takes more time
-                #few amount of lexicon terms exists in each doc
+            tokens = TreebankWordTokenizer().tokenize(doc)
+            bigrams = [" ".join(i) for i in ngrams(tokens,2)]
+            doctokens = tokens + bigrams
+            
+            tokencounts = Counter(doctokens)            
+            match = set(tokencounts.keys()) & set(self.lexicon["ngram"])
+
+            if len(match) > 0 :
+                #occurrences vector
+                occurrences = self.lexicon["ngram"].map(lambda w : w in match)
+                ovec = csr_matrix(occurrences)
+                #polarity vector
+                pvec = csr_matrix(self.lexicon["polarity"])
+                #counts vector
+                counts = self.lexicon["ngram"].map(lambda w : tokencounts[w] if w in match else 0 )
+                cvec = csr_matrix(counts)
                 
-                p = int(self.lexicon["polarity"][self.lexicon["ngram"] == w])
-                if w in doc:
-                    r = regex.compile(r"(?:^|\s+)%s(?:\s+|$)" % regex.escape(w) ,encoding="utf-8")
-                    n = len(r.findall(doc))
+                if self.polarity:
+                    if self.weightedcount:
+                        vector = ovec.multiply(pvec).multiply(cvec)
+                    else :
+                        vector = ovec.multiply(pvec)
+                else : 
+                    if self.weightedcount:
+                        vector = ovec.multiply(cvec)
+                    else :
+                        vector = ovec         
+                vector = vector.todense()
+            else :
+                #can't skip because np.empty is > 0 
+                vector = np.zeros(len(self.lexicon))
+        
+            features[docid] = vector
 
-                else :
-                    n = 0 
-
-                if  n > 0:
-                    if self.polarity:
-                        if self.weightedcount:
-                            v = n * p 
-                        else :
-                            v = p                        
-                    else : 
-                        v = 1 
-                else :
-                    v = 0 
-
-                vector.append(v)
-            features.append(vector)
-                
-        return features
+        return csr_matrix(features)
                 
         
     def fit(self, X, y=None, **fit_params):
