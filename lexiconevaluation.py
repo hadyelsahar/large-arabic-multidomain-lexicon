@@ -108,7 +108,7 @@ for dname in datasets :
 
     classifiers = {
                 "svm" : LinearSVC(penalty="l1", dual=False),
-                "svm_dual" : LinearSVC(penalty="l2", dual=True)
+                "svm_dual" : LinearSVC(penalty="l2", dual=True),
                 "LREG": LogisticRegression(penalty="l1", dual=False),
                 "BernoulliNB" : BernoulliNB(alpha=.01),                
                 "SGD" : SGDClassifier(loss="hinge", penalty="l1"),
