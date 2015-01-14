@@ -2,6 +2,7 @@
 
 import sys
 import argparse
+import csv
 
 import numpy as np
 import pandas as pd
@@ -16,17 +17,25 @@ from sklearn.feature_selection import VarianceThreshold
 from sklearn import preprocessing
 from sklearn import cross_validation
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
+from sklearn.svm import SVC
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.naive_bayes import BernoulliNB, MultinomialNB
+from sklearn.naive_bayes import GaussianNB
+from sklearn.linear_model import SGDClassifier, LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
 
 from classes.Document import *
 from classes.Utils import * 
 from classes.LexiconVectorizer import * 
+from classes.DeltaTfidf import * 
 
 
 valid_datasets = ["SUQ","QYM","TRH","TRR","MOV","LABR","RES"]
 
-parser = argparse.ArgumentParser(description='script for designing experiments sentiment classification upon created datasets and generated lexicons')
+parser = argparse.ArgumentParser(description='Sentiment classification Experiments')
 parser.add_argument('-d','--dataset',
     help='which dataset to run experiment on',required=False)
+parser.add_argument('-o','--output', help='ouput file name',required=True)
 args = parser.parse_args()
 if args.dataset is None : 
     datasets = valid_datasets
@@ -36,9 +45,6 @@ else :
     else : 
         print " only available datasets are " + str(valid_datasets)
         sys.exit()
-
-
-# c = {"TRH":100,"QYM":30}
 
 for dname in datasets : 
 
@@ -65,6 +71,10 @@ for dname in datasets :
                             polarity = True,
                             weightedcount = True,
                             preprocessor = Document.preprocess
+                        ),
+                    "delta-tfidf" : DeltaTfidf(                            
+                            tokenizer = TreebankWordTokenizer().tokenize,
+                            preprocessor = Document.preprocess
                         )
     }
 
@@ -81,83 +91,137 @@ for dname in datasets :
                 "CV_Balanced_3C" : create_dataset(dname, 
                     CV = True, neutral = True, balanced = True, n_folds = 5
                     ),
-                "split_unBalanced_2C" : create_dataset(dname, 
+                "Split_unBalanced_2C" : create_dataset(dname, 
                     CV = False, neutral = False, balanced = False, n_folds = 5
+                    ),
+                "Split_Balanced_2C" : create_dataset(dname, 
+                    CV = False, neutral = False, balanced = True, n_folds = 5
+                    ),
+                "Split_unBalanced_3C" : create_dataset(dname, 
+                    CV = False, neutral = True, balanced = False, n_folds = 5
+                    ),
+                "Split_Balanced_3C" : create_dataset(dname, 
+                    CV = False, neutral = True, balanced = True, n_folds = 5
                     )
     }
 
 
     classifiers = {
-                "svc" : LinearSVC(penalty="l1", dual=False),
-                # "svc_penalized" : LinearSVC(penalty="l1", dual=False, C= c[dname])
+                "svm" : LinearSVC(penalty="l1", dual=False),
+                "svm_dual" : LinearSVC(penalty="l2", dual=True)
+                "LREG": LogisticRegression(penalty="l1", dual=False),
+                "BernoulliNB" : BernoulliNB(alpha=.01),                
+                "SGD" : SGDClassifier(loss="hinge", penalty="l1"),
+                "KNN" : KNeighborsClassifier(n_neighbors=5, algorithm='auto')
     }
 
 
     #Feature Building
     features = {
-                # "lex-domain" : FeatureUnion([
-                #         ("lex-domain", vectorizers["lex-domain"])]
-                #         ),
+                "lex-domain" : FeatureUnion([
+                        ("lex-domain", vectorizers["lex-domain"])]
+                        ),
                 "lex-all" : FeatureUnion([
                         ("lex-all", vectorizers["lex-all"])]
                         ),
-                # "tfidf" : FeatureUnion([
-                #         ("tfidf", vectorizers["tfidf"])]
-                #         ),
-                # "count" : FeatureUnion([
-                #         ("count", vectorizers["count"])]
-                #         ),
-                # "tfidf_lex-domain" : FeatureUnion([
-                #         ("lex-domain", vectorizers["lex-domain"]),
-                #         ("tfidf", vectorizers["tfidf"])]
-                #         ),
-                # "tfidf_lex-all" : FeatureUnion([
-                #         ("lex-all", vectorizers["lex-all"]),
-                #         ("tfidf", vectorizers["tfidf"])]
-                #         ),
-                # "count_lex-domain" : FeatureUnion([
-                #         ("lex-domain", vectorizers["lex-domain"]),
-                #         ("count", vectorizers["count"])]
-                #         ),
-                # "count_lex-all" : FeatureUnion([
-                #         ("lex-all", vectorizers["lex-all"]),
-                #         ("count", vectorizers["count"])]
-                #         )
+                "tfidf" : FeatureUnion([
+                        ("tfidf", vectorizers["tfidf"])]
+                        ),
+                "delta-tfidf" : FeatureUnion([
+                        ("delta-tfidf", vectorizers["delta-tfidf"])]
+                        ),
+                "count" : FeatureUnion([
+                        ("count", vectorizers["count"])]
+                        ),
+                "tfidf_lex-domain" : FeatureUnion([
+                        ("lex-domain", vectorizers["lex-domain"]),
+                        ("tfidf", vectorizers["tfidf"])]
+                        ),
+                "delta-tfidf_lex-domain" : FeatureUnion([
+                        ("lex-domain", vectorizers["lex-domain"]),
+                        ("delta-tfidf", vectorizers["delta-tfidf"])]
+                        ),
+                "tfidf_lex-all" : FeatureUnion([
+                        ("lex-all", vectorizers["lex-all"]),
+                        ("tfidf", vectorizers["tfidf"])]
+                        ),
+                "delta-tfidf_lex-all" : FeatureUnion([
+                        ("lex-all", vectorizers["lex-all"]),
+                        ("delta-tfidf", vectorizers["delta-tfidf"])]
+                        ),
+                "count_lex-domain" : FeatureUnion([
+                        ("lex-domain", vectorizers["lex-domain"]),
+                        ("count", vectorizers["count"])]
+                        ),
+                "count_lex-all" : FeatureUnion([
+                        ("lex-all", vectorizers["lex-all"]),
+                        ("count", vectorizers["count"])]
+                        )
     }
 
-    
-    for fvector_name,fvector in features.items():
-        for clf_name, clf in classifiers.items():
-            for fold_name,fold in kfolds.items():
+    fout = open(args.output,"w")
+    writer = csv.writer(fout)
 
+    for fold_name,fold in kfolds.items():
+        for fvector_name,fvector in features.items():
+            for clf_name, clf in classifiers.items():
+            
                 print "# %s\t%s\t%s\t%s"%(dname, fold_name, fvector_name, clf_name)
+
                 pipeline = Pipeline([
                                 ('features', fvector), 
                                 # ('select',selector), 
                                 ('classifier', clf)])
+            
+                fold_metrics = []
+                total_accuracy = [] 
+                for (X_train,y_train,X_test,y_test) in fold:
 
-                # for each of the cross folds 
-                # calculate the metrics and store them in array
-                arr = []                
-                for (X_train,y_train,X_test,y_test)  in fold:
-
-                    pipeline.fit_transform(X_train,y_train)
+                    pipeline.fit(X_train,y_train)
                     pred = pipeline.predict(X_test)
 
-                    a1 = np.array(precision_recall_fscore_support(y_test, pred))
-                    a2 = np.array(precision_recall_fscore_support(y_test, pred, 
-                        average = "micro"))
-                    a2[3] = np.sum(a1[3,:]) #support count = sum of all supports
-                    arr.append(np.c_[a1,a2])    
+                    #metrics of each class
+                    m1 = np.array(precision_recall_fscore_support(y_test, pred))
+                    #average of all classes
+                    m2 = np.array(precision_recall_fscore_support(y_test, pred, 
+                        average = "micro"))                    
+                    #sum of all supports not average
+                    m2[3] = np.sum(m1[3,:])
+                    fold_metrics.append(np.c_[m1,m2])    
+                    total_accuracy.append(accuracy_score(y_test, pred))
 
                 # average all the metrics of all cross folds
-                metrics = np.mean(np.array(arr),axis = 0)                
+                metrics = np.mean(np.array(fold_metrics),axis = 0)                
+                #print metrics report
                 x = pd.DataFrame(metrics).transpose()
-
                 ic3 = ["neg","neutral","pos","Average/Total"]
                 ic2 = ["neg","pos","Average/Total"]
                 x.index =  ic3 if len(metrics[0]) == 4 else ic2                 
-                x.columns = ["precision","recall","fscore","support"]
+                x.columns = ["precision","recall","fscore","support"]                
+                
+                fscore = x["fscore"]["Average/Total"]
+                accuracy = np.mean(total_accuracy)
 
                 print x 
+                print "total_accuracy = %s"%accuracy
                 print "\n"
+
+                #log average fscore/accuracy to a file 
+
+                writer.writerow([dname, 
+                    fold_name,
+                    fvector_name,
+                    clf_name,                    
+                    fscore,
+                    accuracy
+                    ])
+
+
+    fout.close()
+
+
+                
+
+
+
+
