@@ -73,8 +73,8 @@ class DeltaTfidf(TransformerMixin):
         return self
 
 
-    def get_feature_names():
-        return self.lexicon["ngrams"]
+    def get_feature_names(self):
+        return self.posvectorizer.get_feature_names()
 
 
 
