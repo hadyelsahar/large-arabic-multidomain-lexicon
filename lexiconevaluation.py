@@ -51,7 +51,6 @@ else :
 for dname in datasets : 
 
     vectorizers  = {
-
                     "tfidf" : TfidfVectorizer(
                             tokenizer=TreebankWordTokenizer().tokenize,
                             ngram_range=(1,2),norm="l1",
@@ -107,14 +106,13 @@ for dname in datasets :
                     )
     }
 
-    tuned_parameters = [{'C': [0.0001, 0.001, 0.1, 1, 10, 100, 1000]}]
-
+    
     classifiers = {
                 # "svm": LinearSVC(penalty="l1", dual=False),
                 "svm_cv": GridSearchCV(
                     LinearSVC(penalty="l1", dual=False),
-                    tuned_parameters, cv = None 
-                    )                
+                    [{'C': [0.0001, 0.001, 0.1, 1, 10, 100, 1000]}] #range of C coefficients to try
+                    )
                 # "LREG": LogisticRegression(penalty="l1", dual=False),
                 # "BernoulliNB" : BernoulliNB(alpha=.01),                
                 # "SGD" : SGDClassifier(loss="hinge", penalty="l1"),
