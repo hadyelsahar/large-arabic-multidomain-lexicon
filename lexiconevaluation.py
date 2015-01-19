@@ -23,6 +23,7 @@ from sklearn.naive_bayes import BernoulliNB, MultinomialNB
 from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import SGDClassifier, LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.grid_search import GridSearchCV
 
 from classes.Document import *
 from classes.Utils import * 
@@ -31,6 +32,7 @@ from classes.DeltaTfidf import *
 
 
 valid_datasets = ["SUQ","QYM","TRH","TRR","MOV","LABR","RES"]
+valid_datasets = ["SUQ","TRH","MOV","LABR","RES"]
 
 parser = argparse.ArgumentParser(description='Sentiment classification Experiments')
 parser.add_argument('-d','--dataset',
@@ -105,16 +107,19 @@ for dname in datasets :
                     )
     }
 
+    tuned_parameters = [{'C': [0.0001, 0.001, 0.1, 1, 10, 100, 1000]}]
 
     classifiers = {
-                "svm" : LinearSVC(penalty="l1", dual=False),
-                "svm_dual" : LinearSVC(penalty="l2", dual=True),
-                "LREG": LogisticRegression(penalty="l1", dual=False),
-                "BernoulliNB" : BernoulliNB(alpha=.01),                
-                "SGD" : SGDClassifier(loss="hinge", penalty="l1"),
-                "KNN" : KNeighborsClassifier(n_neighbors=5, algorithm='auto')
+                # "svm": LinearSVC(penalty="l1", dual=False),
+                "svm_cv": GridSearchCV(
+                    LinearSVC(penalty="l1", dual=False),
+                    tuned_parameters, cv = None 
+                    )                
+                # "LREG": LogisticRegression(penalty="l1", dual=False),
+                # "BernoulliNB" : BernoulliNB(alpha=.01),                
+                # "SGD" : SGDClassifier(loss="hinge", penalty="l1"),
+                # "KNN" : KNeighborsClassifier(n_neighbors=5, algorithm='auto')
     }
-
 
     #Feature Building
     features = {
@@ -215,7 +220,6 @@ for dname in datasets :
                     fscore,
                     accuracy
                     ])
-
 
     fout.close()
 
