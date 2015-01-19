@@ -116,7 +116,4 @@ for vectorizer_name,vectorizer in vectorizers.items():
                 score = i.mean_validation_score
                 c = i.parameters["C"]
                 print "%s \t %s \t %s \t %s"%(dname, vectorizer_name, c, score)
-
-
-
             
