@@ -3,21 +3,25 @@ from bokeh.models import HoverTool
 from bokeh.plotting import ColumnDataSource, figure, output_file, show
 from bokeh.sampledata.unemployment1948 import data
 import pandas as pd 
-
+import math 
 from bokeh.plotting import figure, output_file, show, VBox
 
 
-# x = pd.read_csv("./docsize_vs_accuracy/svm_cv_count_doclength_accuracy.csv")
-# x["posnegsum"] = x.poscount + x.negcount
-# x["posnegsub"] = x.poscount - x.negcount
-
-# x.error = 
-
+x = pd.read_csv("./docsize_vs_accuracy/svm_cv_count_doclength_accuracy.csv")
+x["posnegsum"] = x.poscount + x.negcount
+x["posnegdif"] = x.poscount - x.negcount
+x["error"] = x.predicted != x.trueclass
 
 
+# minmm = abs(x.posnegdif_count.min())+1
+# x["posnegdif"] = x.posnegdif_count.apply(lambda l : round(math.log(l+minmm,2)))
+x["wordcount_rank"] = x.wordcount.apply(lambda l : round(math.log(l,2)))
 
 
+x["length"] = x["wordcount_rank"]
+x["subjectivity"] = x["posnegdif"]
 
+groups = x.groupby(["length","subjectivity"], as_index=False).agg({"error": lambda a : float(sum(a))/len(a)})
 
 
 
@@ -25,7 +29,7 @@ from bokeh.plotting import figure, output_file, show, VBox
 
 # Read in the data with pandas. Convert the year column to string
 
-x = pd.read_csv("./docsize_vs_accuracy/temp.csv")
+x = groups
 
 # adjust error range to 0 > 10 
 emin = x.error.min()
@@ -33,6 +37,7 @@ emax = x.error.max()
 oldrange = emax - emin
 newrange = 12
 
+x["error"] = x.error.map(lambda e : math.log(e+1))
 x["errorrange"] = x.error.map(lambda e : ((e-emin)*newrange / oldrange ))
 
 # this is the colormap from the original plot
@@ -46,11 +51,11 @@ subjective = []
 color = []
 errorrate = []
 
-for l in x.lengthrank:
-    for s in x.posnegdif:
+for l in x.length:
+    for s in x.subjectivity:
         length.append(l)
         subjective.append(s)
-        error = x["errorrange"][x.lengthrank == l][x.posnegdif == s].values        
+        error = x["errorrange"][x.length == l][x.subjectivity == s].values        
         if len(error) > 0 :
             errorrate.append(error[0])        
             color.append(colors[int(error[0])])
