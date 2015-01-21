@@ -7,24 +7,22 @@ import math
 from bokeh.plotting import figure, output_file, show, VBox
 
 
-x = pd.read_csv("./docsize_vs_accuracy/svm_cv_count_doclength_accuracy.csv")
+x = pd.read_csv("./docsize_vs_accuracy_negation/svm_cv_delta-tfidf_doclength_accuracy.csv")
+
 x["posnegsum"] = x.poscount + x.negcount
-x["posnegdif"] = x.poscount - x.negcount
+x["posnegdif"] = (x.poscount - x.negcount)#.map(abs)
 x["error"] = x.predicted != x.trueclass
 
 
-# minmm = abs(x.posnegdif_count.min())+1
-# x["posnegdif"] = x.posnegdif_count.apply(lambda l : round(math.log(l+minmm,2)))
-x["wordcount_rank"] = x.wordcount.apply(lambda l : round(math.log(l,2)))
+# minmm = abs(x.posnegdif.min())+1
+x["posnegdif"] = x.posnegdif.apply(lambda l : round(l))
+x["wordcount_rank"] = x.wordcount.apply( lambda l : round(math.log(l,2)))
+# x["wordcount_rank"] = x.wordcount.apply( lambda l : round(l/10))
 
-
-x["length"] = x["wordcount_rank"]
-x["subjectivity"] = x["posnegdif"]
+x["length"] = x["wordcount_rank"].apply(lambda l : l+0.5)
+x["subjectivity"] = x["posnegdif"].apply(lambda l : l+0.5)
 
 groups = x.groupby(["length","subjectivity"], as_index=False).agg({"error": lambda a : float(sum(a))/len(a)})
-
-
-
 
 
 # Read in the data with pandas. Convert the year column to string
@@ -35,14 +33,15 @@ x = groups
 emin = x.error.min()
 emax = x.error.max()
 oldrange = emax - emin
-newrange = 12
+newrange = 7
 
 x["error"] = x.error.map(lambda e : math.log(e+1))
 x["errorrange"] = x.error.map(lambda e : ((e-emin)*newrange / oldrange ))
 
 # this is the colormap from the original plot
-colors = ["#F7E9E9","#F7D7D7","#F7BCBC","#F7A3A3","#ED7E7E","#ED6464","#DE4545","#CC3333","#B82727","#9C1616","#800E0E","#630707","#450000"]
-
+# colors = ["#F7E9E9","#F7D7D7","#F7A3A3","#ED7E7E","#ED6464","#DE4545","#CC3333","#B82727","#9C1616"]
+# colors = ["#F7E9E9","#F7D7D7","#F7BCBC","#F7A3A3","#ED7E7E","#ED6464","#DE4545","#CC3333","#B82727","#9C1616","#800E0E","#630707","#450000"]
+colors = ["#F7D7D7","#F7A3A3","#ED7E7E","#ED6464","#DE4545","#CC3333","#B82727","#630707"]
 
 # Set up the data for plotting. We will need to have values for every
 # pair of year/month names. Map the rate to a color.
@@ -58,7 +57,7 @@ for l in x.length:
         error = x["errorrange"][x.length == l][x.subjectivity == s].values        
         if len(error) > 0 :
             errorrate.append(error[0])        
-            color.append(colors[int(error[0])])
+            color.append(colors[int(round(error[0]))])
         else :
             errorrate.append(None)
             color.append("#FFFFFF")
@@ -76,12 +75,11 @@ source = ColumnDataSource(
 # EXERCISE: output to static HTML file
 
 # create a new figure
-p = figure(title="doc length vs doc subjective vs error rate", tools="resize",
+p = figure(title="doc length vs doc subjective vs error rate", tools="save,resize",
            x_range=[0,int(max(length))+1], y_range=[int(max(subjective)+1),int(min(subjective))],
            plot_width=400, plot_height=400, x_axis_location="above")
 
-
-p.rect('length', 'subjective', 0.95, 0.95, source=source, color='color', line_color=None)
+p.rect('length', 'subjective', 0.90, 0.90, source=source, color='color', line_color=None)
 
 # EXERCISE: use the `rect renderer with the following attributes:
 #   - x_range is years, y_range is months (reversed)
@@ -92,7 +90,7 @@ p.rect('length', 'subjective', 0.95, 0.95, source=source, color='color', line_co
 p.grid.grid_line_color = None
 p.axis.axis_line_color = None
 p.axis.major_tick_line_color = None
-p.axis.major_label_text_font_size = "5pt"
+p.axis.major_label_text_font_size = "12pt"
 p.axis.major_label_standoff = 0
 p.xaxis.major_label_orientation = np.pi/3
 
